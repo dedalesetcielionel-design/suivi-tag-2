@@ -268,14 +268,16 @@
 <script>
 const DAYS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi'];
 const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
-const FIRST_YEAR = 2025, FIRST_MONTH = 4; // Mai 2025
+const FIRST_YEAR = 2026, FIRST_MONTH = 9; // Octobre 2026
 
 const _now = new Date();
 let year = _now.getFullYear(), month = _now.getMonth();
+// Si on est avant le premier mois suivi, on démarre sur le premier mois
+if (year < FIRST_YEAR || (year === FIRST_YEAR && month < FIRST_MONTH)) { year = FIRST_YEAR; month = FIRST_MONTH; }
 
 /* ---- STORAGE HELPERS ---- */
-function fmtKey(d, sfx) { return `ct_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}${sfx||''}`; }
-function fmtMonthKey(y, m, sfx) { return `ct_m_${y}_${m}${sfx||''}`; }
+function fmtKey(d, sfx) { return `ct2_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}${sfx||''}`; }
+function fmtMonthKey(y, m, sfx) { return `ct2_m_${y}_${m}${sfx||''}`; }
 
 function ls(key) { try { return localStorage.getItem(key); } catch(e) { return null; } }
 function lsSet(key, val) { try { if(val===''||val===null) localStorage.removeItem(key); else localStorage.setItem(key,val); } catch(e){} }
@@ -306,17 +308,20 @@ function getLastValOfMonth(y, m) {
 // Capital de départ effectif du mois courant :
 // 1. Override manuel saisi par l'utilisateur
 // 2. Sinon : dernière valeur du mois précédent
-// 3. Sinon : 1000 par défaut (premier mois)
+// 3. Sinon : 0 par défaut (premier mois)
 function getCapitalForMonth(y, m) {
   const override = ls(fmtMonthKey(y, m, '_cap'));
   if (override !== null && override !== '') return { val: parseFloat(override), origin: 'manuel' };
+
+  // Premier mois suivi : on repart toujours de 0, sans report d'un mois précédent
+  if (y === FIRST_YEAR && m === FIRST_MONTH) return { val: 0, origin: 'défaut' };
 
   let py = y, pm = m - 1;
   if (pm < 0) { pm = 11; py--; }
   const prev = getLastValOfMonth(py, pm);
   if (prev !== null) return { val: prev, origin: `report de ${MONTHS[pm]} ${py}` };
 
-  return { val: 1000, origin: 'défaut' };
+  return { val: 0, origin: 'défaut' };
 }
 
 function saveCapitalOverride() {
@@ -340,6 +345,8 @@ function changeMonth(delta) {
   month += delta;
   if (month < 0) { month = 11; year--; }
   if (month > 11) { month = 0; year++; }
+  // Pas de retour avant le premier mois suivi
+  if (year < FIRST_YEAR || (year === FIRST_YEAR && month < FIRST_MONTH)) { year = FIRST_YEAR; month = FIRST_MONTH; }
   // Sync override field
   const ov = ls(fmtMonthKey(year, month, '_cap'));
   document.getElementById('capital-override').value = ov || '';
@@ -380,12 +387,15 @@ function getGlobalStats(currentCapInfo) {
     if (m > 11) { m = 0; y++; }
   }
 
+  // Base de calcul du % global : capital initial, ou dépôts si le départ est à 0
+  const base = firstCapital > 0 ? firstCapital : totalDeposits;
+
   return {
     firstCapital,
     currentVal,
     totalDeposits,
     totalPureGain,
-    totalPct: firstCapital ? (totalPureGain / firstCapital) * 100 : 0
+    totalPct: base > 0 ? (totalPureGain / base) * 100 : 0
   };
 }
 
@@ -497,7 +507,9 @@ function render() {
   // Bilan mois
   const avgPctFinal = pctCount > 0 ? pctSum / pctCount : null;
   const pureGain = lastVal - capital - totalDeposits;
-  const totalPct = capital > 0 ? (pureGain / capital) * 100 : 0;
+  // Base de calcul du % du mois : capital de départ, ou dépôts si le départ est à 0
+  const baseMois = capital > 0 ? capital : totalDeposits;
+  const totalPct = baseMois > 0 ? (pureGain / baseMois) * 100 : 0;
 
   let estimFinal = null;
   if (avgPctFinal !== null) {
