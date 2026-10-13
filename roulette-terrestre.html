@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Casino Tracker" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Casino Tracker</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #263348;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.13);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #c084fc;
+      --accent2: #9333ea;
+      --green: #10b981;
+      --green-bg: rgba(16,185,129,0.12);
+      --red: #f43f5e;
+      --red-bg: rgba(244,63,94,0.12);
+      --yellow: #f59e0b;
+      --yellow-bg: rgba(245,158,11,0.12);
+      --purple: #a78bfa;
+      --purple-bg: rgba(167,139,250,0.12);
+      --radius: 14px;
+      --radius-sm: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'SF Pro Display', -apple-system, 'Segoe UI', sans-serif;
+      min-height: 100dvh;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* HEADER */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(15,23,42,0.95);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      padding-top: calc(12px + env(safe-area-inset-top));
+    }
+    .header-row { display: flex; align-items: center; gap: 8px; }
+    .back-btn { color: var(--muted); font-size: 22px; text-decoration: none; line-height: 1; flex-shrink: 0; }
+    .app-title { font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; flex: 1; }
+    .month-nav { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    .nav-btn {
+      background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); color: var(--text);
+      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 18px;
+    }
+    .nav-btn:active { background: var(--accent2); }
+    .month-title { flex: 1; font-size: 18px; font-weight: 700; }
+
+    /* GENERAL CAPITAL */
+    .general-bar {
+      background: linear-gradient(135deg, rgba(192,132,252,0.12), rgba(147,51,234,0.06));
+      border-bottom: 1px solid rgba(192,132,252,0.2);
+      padding: 14px 16px;
+    }
+    .general-title { font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 10px; }
+    .general-row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .general-main { flex: 1; min-width: 150px; }
+    .general-label { font-size: 11px; color: var(--muted); margin-bottom: 3px; }
+    .general-value { font-size: 28px; font-weight: 800; color: var(--accent); line-height: 1; }
+    .general-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .general-inputs { display: flex; gap: 6px; align-items: flex-end; flex-wrap: wrap; }
+    .input-group { display: flex; flex-direction: column; gap: 3px; }
+    .input-label { font-size: 10px; color: var(--muted); }
+    .config-input, .config-select {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); color: var(--text);
+      font-size: 13px; font-weight: 600; padding: 7px 9px; outline: none;
+    }
+    .config-input { width: 110px; }
+    .config-select { width: 85px; }
+    .config-input:focus, .config-select:focus { border-color: var(--accent); }
+
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; padding: 12px 16px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 11px 13px;
+    }
+    .stat-card.accent { border-color: rgba(192,132,252,0.3); background: rgba(192,132,252,0.06); }
+    .stat-card.global { border-color: rgba(167,139,250,0.25); background: rgba(167,139,250,0.06); grid-column: span 2; }
+    .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+    .stat-value { font-size: 20px; font-weight: 700; line-height: 1; }
+    .stat-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .stat-row { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 4px; }
+    .stat-mini { font-size: 12px; font-weight: 600; }
+    .pos { color: var(--green); } .neg { color: var(--red); }
+    .neu { color: var(--muted); } .acc { color: var(--accent); } .pur { color: var(--purple); }
+
+    /* SESSION LIST */
+    .section-title {
+      padding: 10px 16px 6px;
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      border-top: 1px solid var(--border);
+    }
+
+    .session-list { padding: 0 16px 120px; display: flex; flex-direction: column; gap: 10px; }
+
+    .session-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); overflow: hidden;
+    }
+    .session-card.has-data { border-color: rgba(192,132,252,0.2); }
+
+    .session-header {
+      display: flex; align-items: center; gap: 12px;
+      padding: 12px 14px;
+      cursor: pointer;
+    }
+    .session-date-block { flex-shrink: 0; text-align: center; width: 40px; }
+    .session-day { font-size: 18px; font-weight: 800; color: var(--text); line-height: 1; }
+    .session-dow { font-size: 10px; color: var(--muted); text-transform: uppercase; }
+    .session-body { flex: 1; }
+    .session-status { font-size: 13px; font-weight: 600; color: var(--muted); }
+    .session-status.played { color: var(--text); }
+    .session-detail { font-size: 11px; color: var(--muted); margin-top: 2px; }
+    .session-result {
+      flex-shrink: 0; text-align: right;
+    }
+    .result-badge {
+      display: inline-block; padding: 4px 10px; border-radius: 20px;
+      font-size: 13px; font-weight: 700;
+    }
+    .result-badge.pos { background: var(--green-bg); color: var(--green); }
+    .result-badge.neg { background: var(--red-bg); color: var(--red); }
+    .result-badge.zero { background: var(--surface2); color: var(--muted); }
+    .expand-icon { font-size: 16px; color: var(--muted); transition: transform 0.2s; flex-shrink: 0; }
+    .expand-icon.open { transform: rotate(90deg); }
+
+    /* SESSION FORM */
+    .session-form {
+      border-top: 1px solid var(--border);
+      padding: 14px;
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .session-form.open { display: flex; }
+
+    .form-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+    .form-group { display: flex; flex-direction: column; gap: 4px; flex: 1; min-width: 90px; }
+    .form-label { font-size: 11px; color: var(--muted); }
+    .form-input {
+      background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); color: var(--text);
+      font-size: 14px; font-weight: 600; padding: 8px 10px;
+      text-align: center; outline: none; width: 100%;
+    }
+    .form-input:focus { border-color: var(--accent); }
+    .form-input::placeholder { color: var(--muted); font-weight: 400; font-style: italic; }
+    .form-input.neg-val { color: var(--red); border-color: rgba(244,63,94,0.3); background: var(--red-bg); }
+    .form-input.pos-val { color: var(--green); border-color: rgba(16,185,129,0.3); background: var(--green-bg); }
+    .form-input.mise-val { color: var(--yellow); border-color: rgba(245,158,11,0.3); background: var(--yellow-bg); }
+
+    .form-calc {
+      background: var(--surface2); border-radius: var(--radius-sm);
+      padding: 8px 12px; font-size: 12px; color: var(--muted);
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .form-calc-row { display: flex; justify-content: space-between; align-items: center; }
+    .form-calc-label { font-size: 11px; }
+    .form-calc-val { font-weight: 600; font-size: 13px; }
+
+    .btn-clear {
+      background: none; border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); color: var(--muted);
+      font-size: 12px; padding: 7px 14px; cursor: pointer; align-self: flex-start;
+    }
+    .btn-clear:active { background: var(--red-bg); color: var(--red); border-color: var(--red); }
+
+    /* INSTALL HINT */
+    .install-hint {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(15,23,42,0.97); border-top: 1px solid var(--border2);
+      padding: 10px 40px 10px 16px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      font-size: 12px; color: var(--muted); text-align: center;
+    }
+    .install-hint span { color: var(--accent); font-weight: 600; }
+    .hint-close {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <a class="back-btn" href="index.html">‹</a>
+    <div class="app-title">🎲 Casino Terrestre</div>
+    <div style="font-size:11px;color:var(--muted)" id="sessions-count"></div>
+  </div>
+  <div class="month-nav">
+    <button class="nav-btn" onclick="changeMonth(-1)">&#8249;</button>
+    <div class="month-title" id="month-title"></div>
+    <button class="nav-btn" onclick="changeMonth(1)">&#8250;</button>
+  </div>
+</div>
+
+<!-- CAPITAL GÉNÉRAL -->
+<div class="general-bar">
+  <div class="general-title">🏦 Capital Général</div>
+  <div class="general-row">
+    <div class="general-main">
+      <div class="general-label">Disponible actuellement</div>
+      <div class="general-value" id="general-display">—</div>
+      <div class="general-sub" id="general-sub"></div>
+    </div>
+    <div class="general-inputs">
+      <div class="input-group">
+        <div class="input-label">Capital initial</div>
+        <input class="config-input" type="number" id="capital-initial" placeholder="1000" step="50" min="0"
+          onchange="saveCapitalInitial(); render()" />
+      </div>
+      <div class="input-group">
+        <div class="input-label">Devise</div>
+        <select class="config-select" id="currency" onchange="render()">
+          <option value="€">€ EUR</option>
+          <option value="$">$ USD</option>
+          <option value="USDT">USDT</option>
+        </select>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="stats-grid" id="stats-grid"></div>
+
+<div class="section-title">Sessions du mois</div>
+<div class="session-list" id="session-list"></div>
+
+<div class="install-hint" id="install-hint">
+  📱 <span>iPhone :</span> Partager → "Sur l'écran d'accueil" &nbsp;|&nbsp; <span>Android :</span> Menu ⋮ → "Installer"
+  <button class="hint-close" onclick="this.parentElement.style.display='none'">×</button>
+</div>
+
+<script>
+const JOURS_FULL = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const JOURS_SHORT = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const FIRST_YEAR = 2025, FIRST_MONTH = 4;
+
+let year = 2025, month = 4;
+let openCard = null;
+
+/* ---- STORAGE ---- */
+function fmtKey(d, sfx) { return `ct_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}${sfx||''}`; }
+function fmtMKey(y, m, sfx) { return `ct_m_${y}_${m}${sfx||''}`; }
+function ls(k) { try { return localStorage.getItem(k); } catch(e) { return null; } }
+function lsSet(k, v) { try { if(v===''||v===null) localStorage.removeItem(k); else localStorage.setItem(k,v); } catch(e){} }
+
+/* ---- CAPITAL INITIAL (unique, pas par mois) ---- */
+function getCapitalInitial() {
+  const v = ls('ct_capital_initial');
+  return v !== null && v !== '' ? parseFloat(v) : 1000;
+}
+function saveCapitalInitial() {
+  lsSet('ct_capital_initial', document.getElementById('capital-initial').value);
+}
+
+/* ---- CAPITAL GÉNÉRAL COURANT ---- */
+// Recalcule le capital général en parcourant toutes les sessions depuis le début
+function getGeneralCapital(upToYear, upToMonth, upToDay) {
+  let capital = getCapitalInitial();
+  let y = FIRST_YEAR, m = FIRST_MONTH;
+  while (y < upToYear || (y === upToYear && m <= upToMonth)) {
+    const days = getAllDaysOf(y, m);
+    for (let i = 0; i < days.length; i++) {
+      const d = days[i];
+      // Stop si on a atteint la limite
+      if (upToDay !== undefined && y === upToYear && m === upToMonth && d.getDate() > upToDay) break;
+      const mise = ls(fmtKey(d, '_mise'));
+      const retour = ls(fmtKey(d, '_retour'));
+      if (mise !== null && mise !== '') {
+        capital -= parseFloat(mise); // On sort la mise du général
+        if (retour !== null && retour !== '') {
+          capital += parseFloat(retour); // On rentre ce qu'on rapporte
+        }
+        // Si pas de retour saisi = mise perdue, capital déjà réduit
+      }
+    }
+    m++; if (m > 11) { m = 0; y++; }
+  }
+  return capital;
+}
+
+/* ---- DAYS ---- */
+function getAllDaysOf(y, m) {
+  const days = [];
+  const d = new Date(y, m, 1, 12, 0, 0);
+  while (d.getMonth() === m) { days.push(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0)); d.setDate(d.getDate() + 1); }
+  return days;
+}
+
+/* ---- NAV ---- */
+function changeMonth(delta) {
+  month += delta;
+  if (month < 0) { month = 11; year--; }
+  if (month > 11) { month = 0; year++; }
+  openCard = null;
+  render();
+}
+
+/* ---- TOGGLE SESSION CARD ---- */
+function toggleCard(key) {
+  openCard = openCard === key ? null : key;
+  render();
+}
+
+/* ---- SAVE SESSION ---- */
+function saveSession(dateStr, field, value) {
+  const parts = dateStr.split('-');
+  const d = new Date(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]));
+  lsSet(fmtKey(d, '_' + field), value);
+  render();
+}
+function clearSession(dateStr) {
+  const parts = dateStr.split('-');
+  const d = new Date(parseInt(parts[0]), parseInt(parts[1]), parseInt(parts[2]));
+  lsSet(fmtKey(d, '_mise'), '');
+  lsSet(fmtKey(d, '_retour'), '');
+  lsSet(fmtKey(d, '_note'), '');
+  openCard = null;
+  render();
+}
+
+/* ---- RENDER ---- */
+function render() {
+  const currency = document.getElementById('currency').value;
+  const capitalInitial = getCapitalInitial();
+  document.getElementById('capital-initial').value = capitalInitial;
+
+  const allDays = getAllDaysOf(year, month);
+  document.getElementById('month-title').textContent = `${MONTHS[month]} ${year}`;
+
+  // Capital général actuel (fin du mois courant ou aujourd'hui)
+  const generalNow = getGeneralCapital(year, month + 1, 0); // fin du mois
+  const gainGeneral = generalNow - capitalInitial;
+
+  document.getElementById('general-display').textContent = generalNow.toFixed(2) + ' ' + currency;
+  document.getElementById('general-sub').textContent =
+    (gainGeneral >= 0 ? '+' : '') + gainGeneral.toFixed(2) + ' ' + currency + ' depuis le départ';
+
+  // Stats du mois
+  let sessionsCount = 0, winsCount = 0, lossCount = 0, nullCount = 0;
+  let totalMise = 0, totalRetour = 0, totalGainNet = 0;
+  let capitalDebutMois = getGeneralCapital(year, month, 0); // avant le 1er du mois
+
+  allDays.forEach(d => {
+    const mise = ls(fmtKey(d, '_mise'));
+    const retour = ls(fmtKey(d, '_retour'));
+    if (mise !== null && mise !== '') {
+      const m = parseFloat(mise);
+      const r = retour !== null && retour !== '' ? parseFloat(retour) : 0;
+      const gain = r - m;
+      totalMise += m;
+      totalRetour += r;
+      totalGainNet += gain;
+      sessionsCount++;
+      if (gain > 0) winsCount++;
+      else if (gain < 0) lossCount++;
+      else nullCount++;
+    }
+  });
+
+  const winRate = sessionsCount > 0 ? (winsCount / sessionsCount) * 100 : null;
+  const capitalFinMois = getGeneralCapital(year, month + 1, 0);
+  const gainMois = capitalFinMois - capitalDebutMois;
+  const gainMoisPct = capitalDebutMois > 0 ? (gainMois / capitalDebutMois) * 100 : 0;
+
+  document.getElementById('sessions-count').textContent = `${sessionsCount} session${sessionsCount !== 1 ? 's' : ''}`;
+
+  // SESSION LIST
+  let html = '';
+  allDays.forEach(d => {
+    const dateStr = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+    const dow = d.getDay();
+    const mise = ls(fmtKey(d, '_mise'));
+    const retour = ls(fmtKey(d, '_retour'));
+    const note = ls(fmtKey(d, '_note'));
+    const hasData = mise !== null && mise !== '';
+    const isOpen = openCard === dateStr;
+
+    let gainNet = null, gainPct = null;
+    let statusText = 'Pas de session';
+    let resultBadge = '';
+    let detailText = '';
+
+    if (hasData) {
+      const miseVal = parseFloat(mise);
+      const retourVal = retour !== null && retour !== '' ? parseFloat(retour) : 0;
+      gainNet = retourVal - miseVal;
+      gainPct = miseVal > 0 ? (gainNet / miseVal) * 100 : 0;
+      const cls = gainNet > 0 ? 'pos' : gainNet < 0 ? 'neg' : 'zero';
+      resultBadge = `<span class="result-badge ${cls}">${gainNet > 0 ? '+' : ''}${gainNet.toFixed(2)} ${currency}</span>`;
+      statusText = `Mise : ${miseVal.toFixed(0)} ${currency}`;
+      detailText = retour !== null && retour !== ''
+        ? `Retour : ${retourVal.toFixed(0)} ${currency} · ${gainPct > 0 ? '+' : ''}${gainPct.toFixed(1)}% · ${gainNet > 0 ? '✅ Gagné' : gainNet < 0 ? '❌ Perdu' : '⚪ Nul'}`
+        : `En attente du retour...`;
+    }
+
+    // Capital général juste avant cette session
+    const capAvant = getGeneralCapital(year, month, d.getDate() - 1);
+    const capApres = hasData ? getGeneralCapital(year, month, d.getDate()) : null;
+    const impactGeneral = capApres !== null ? capApres - capAvant : null;
+
+    html += `
+    <div class="session-card ${hasData ? 'has-data' : ''}">
+      <div class="session-header" onclick="toggleCard('${dateStr}')">
+        <div class="session-date-block">
+          <div class="session-day">${d.getDate()}</div>
+          <div class="session-dow">${JOURS_SHORT[dow]}</div>
+        </div>
+        <div class="session-body">
+          <div class="session-status ${hasData ? 'played' : ''}">${statusText}</div>
+          ${detailText ? `<div class="session-detail">${detailText}</div>` : ''}
+          ${note ? `<div class="session-detail" style="color:var(--accent);font-style:italic">"${note}"</div>` : ''}
+        </div>
+        <div class="session-result">${resultBadge}</div>
+        <div class="expand-icon ${isOpen ? 'open' : ''}">›</div>
+      </div>
+
+      <div class="session-form ${isOpen ? 'open' : ''}">
+
+        <!-- Mise emportée -->
+        <div class="form-row">
+          <div class="form-group">
+            <div class="form-label">💰 Mise emportée au casino</div>
+            <input class="form-input mise-val" type="number" step="10" min="0" placeholder="Ex: 200"
+              value="${hasData ? parseFloat(mise).toFixed(0) : ''}"
+              onchange="saveSession('${dateStr}','mise',this.value)" />
+          </div>
+          <div class="form-group">
+            <div class="form-label">🎲 Retour à la maison</div>
+            <input class="form-input ${hasData && retour ? (parseFloat(retour) >= parseFloat(mise||0) ? 'pos-val' : 'neg-val') : ''}"
+              type="number" step="10" min="0" placeholder="Ex: 350"
+              value="${retour !== null && retour !== '' ? parseFloat(retour).toFixed(0) : ''}"
+              onchange="saveSession('${dateStr}','retour',this.value)" />
+          </div>
+        </div>
+
+        <!-- Récap automatique -->
+        ${hasData ? `
+        <div class="form-calc">
+          <div class="form-calc-row">
+            <span class="form-calc-label">Gain / Perte session</span>
+            <span class="form-calc-val ${gainNet > 0 ? 'pos' : gainNet < 0 ? 'neg' : 'neu'}">${gainNet !== null ? (gainNet > 0 ? '+' : '') + gainNet.toFixed(2) + ' ' + currency : '—'}</span>
+          </div>
+          <div class="form-calc-row">
+            <span class="form-calc-label">% sur la mise</span>
+            <span class="form-calc-val ${gainPct > 0 ? 'pos' : gainPct < 0 ? 'neg' : 'neu'}">${gainPct !== null ? (gainPct > 0 ? '+' : '') + gainPct.toFixed(1) + '%' : '—'}</span>
+          </div>
+          <div class="form-calc-row" style="border-top:1px solid var(--border);padding-top:6px;margin-top:2px">
+            <span class="form-calc-label">Impact sur capital général</span>
+            <span class="form-calc-val ${impactGeneral > 0 ? 'pos' : impactGeneral < 0 ? 'neg' : 'neu'}">${impactGeneral !== null ? (impactGeneral > 0 ? '+' : '') + impactGeneral.toFixed(2) + ' ' + currency : '—'}</span>
+          </div>
+          <div class="form-calc-row">
+            <span class="form-calc-label">Capital général après session</span>
+            <span class="form-calc-val acc">${capApres !== null ? capApres.toFixed(2) + ' ' + currency : '—'}</span>
+          </div>
+        </div>` : ''}
+
+        <!-- Note -->
+        <div class="form-group">
+          <div class="form-label">📝 Note (optionnel)</div>
+          <input class="form-input" type="text" placeholder="Ex: Belle soirée, table chaude..."
+            value="${note || ''}"
+            onchange="saveSession('${dateStr}','note',this.value)" />
+        </div>
+
+        ${hasData ? `<button class="btn-clear" onclick="clearSession('${dateStr}')">🗑 Effacer la session</button>` : ''}
+      </div>
+    </div>`;
+  });
+
+  document.getElementById('session-list').innerHTML = html;
+
+  // Stats cards
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">📅 Ce mois</div>
+      <div class="stat-value ${gainMois >= 0 ? 'pos' : 'neg'}">${sessionsCount > 0 ? (gainMois >= 0 ? '+' : '') + gainMois.toFixed(2) + ' ' + currency : '—'}</div>
+      <div class="stat-sub ${gainMoisPct >= 0 ? 'pos' : 'neg'}">${sessionsCount > 0 ? (gainMoisPct >= 0 ? '+' : '') + gainMoisPct.toFixed(1) + '% du capital' : 'Aucune session'}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">🎯 Sessions</div>
+      <div class="stat-value neu">${sessionsCount}</div>
+      <div class="stat-sub"><span class="pos">${winsCount}W</span> · <span class="neg">${lossCount}L</span> · <span class="neu">${nullCount}N</span>${winRate !== null ? ' · <span style="color:var(--yellow)">' + winRate.toFixed(0) + '%</span>' : ''}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">💸 Total misé</div>
+      <div class="stat-value neu">${totalMise.toFixed(0)} ${currency}</div>
+      <div class="stat-sub">Retour : ${totalRetour.toFixed(0)} ${currency}</div>
+    </div>
+    <div class="stat-card accent">
+      <div class="stat-label">🏦 Capital général</div>
+      <div class="stat-value acc">${generalNow.toFixed(2)} ${currency}</div>
+      <div class="stat-sub ${gainGeneral >= 0 ? 'pos' : 'neg'}">${gainGeneral >= 0 ? '+' : ''}${gainGeneral.toFixed(2)} ${currency} depuis départ</div>
+    </div>
+  `;
+}
+
+// Init
+const savedCap = ls('ct_capital_initial');
+if (savedCap) document.getElementById('capital-initial').value = savedCap;
+setTimeout(() => { const el = document.getElementById('install-hint'); if(el) el.style.display='none'; }, 8000);
+render();
+</script>
+</body>
+</html>

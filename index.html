@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Mon Tracker" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Mon Tracker</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --border: rgba(255,255,255,0.08);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --copy: #22d3ee;
+      --roulette: #f97316;
+      --casino: #c084fc;
+      --radius: 20px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'SF Pro Display', -apple-system, 'Segoe UI', sans-serif;
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 20px;
+      padding-top: calc(24px + env(safe-area-inset-top));
+      padding-bottom: calc(24px + env(safe-area-inset-bottom));
+    }
+    .logo { font-size: 48px; margin-bottom: 10px; }
+    .title { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; text-align: center; }
+    .subtitle { font-size: 14px; color: var(--muted); text-align: center; margin-top: 6px; margin-bottom: 40px; }
+    .cards { width: 100%; max-width: 380px; display: flex; flex-direction: column; gap: 14px; }
+    .card {
+      display: flex; align-items: center; gap: 18px;
+      padding: 22px 20px; border-radius: var(--radius);
+      border: 1px solid var(--border); background: var(--surface);
+      text-decoration: none; color: var(--text);
+      transition: transform 0.15s;
+    }
+    .card:active { transform: scale(0.97); }
+    .card.copy   { border-color: rgba(34,211,238,0.25);  background: rgba(34,211,238,0.06); }
+    .card.roulette { border-color: rgba(249,115,22,0.25); background: rgba(249,115,22,0.06); }
+    .card.casino { border-color: rgba(192,132,252,0.25); background: rgba(192,132,252,0.06); }
+    .card-icon { font-size: 40px; line-height: 1; flex-shrink: 0; }
+    .card-body { flex: 1; }
+    .card-title { font-size: 17px; font-weight: 700; margin-bottom: 3px; }
+    .card.copy .card-title     { color: var(--copy); }
+    .card.roulette .card-title { color: var(--roulette); }
+    .card.casino .card-title   { color: var(--casino); }
+    .card-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+    .card-arrow { font-size: 22px; color: var(--muted); flex-shrink: 0; }
+    .footer { margin-top: 40px; font-size: 11px; color: var(--muted); text-align: center; opacity: 0.6; }
+    .install-hint {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(15,23,42,0.97); border-top: 1px solid rgba(255,255,255,0.08);
+      padding: 10px 40px 10px 16px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      font-size: 12px; color: var(--muted); text-align: center;
+    }
+    .install-hint span { color: #22d3ee; font-weight: 600; }
+    .hint-close {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="logo">💹</div>
+  <div class="title">Mon Tracker</div>
+  <div class="subtitle">Suis tes performances en un coup d'œil</div>
+
+  <div class="cards">
+    <a class="card copy" href="copy-tracker.html">
+      <div class="card-icon">📈</div>
+      <div class="card-body">
+        <div class="card-title">Copy Trading</div>
+        <div class="card-desc">Suivi journalier, intérêts composés, stats mensuelles et globales</div>
+      </div>
+      <div class="card-arrow">›</div>
+    </a>
+
+    <a class="card roulette" href="roulette-tracker.html">
+      <div class="card-icon">🎰</div>
+      <div class="card-body">
+        <div class="card-title">Roulette en ligne</div>
+        <div class="card-desc">Sessions quotidiennes, bankroll, win rate et résultats mensuels</div>
+      </div>
+      <div class="card-arrow">›</div>
+    </a>
+
+    <a class="card casino" href="roulette-terrestre.html">
+      <div class="card-icon">🎲</div>
+      <div class="card-body">
+        <div class="card-title">Casino Terrestre</div>
+        <div class="card-desc">Capital général, mise par session, gain/perte et impact sur le bankroll</div>
+      </div>
+      <div class="card-arrow">›</div>
+    </a>
+  </div>
+
+  <div class="footer">Tes données restent sur ton téléphone · Aucun compte requis</div>
+
+  <div class="install-hint" id="hint">
+    📱 <span>iPhone :</span> Partager → "Sur l'écran d'accueil" &nbsp;|&nbsp; <span>Android :</span> Menu ⋮ → "Installer l'appli"
+    <button class="hint-close" onclick="this.parentElement.style.display='none'">×</button>
+  </div>
+  <script>
+    setTimeout(() => { const el = document.getElementById('hint'); if(el) el.style.display='none'; }, 8000);
+  </script>
+</body>
+</html>

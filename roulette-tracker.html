@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Roulette Tracker" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Roulette Tracker</title>
+  <link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;Roulette Tracker&quot;,&quot;short_name&quot;:&quot;Roulette&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%230f172a&quot;,&quot;theme_color&quot;:&quot;%230f172a&quot;}">
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #263348;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.13);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #f97316;
+      --accent2: #ea580c;
+      --green: #10b981;
+      --green-bg: rgba(16,185,129,0.12);
+      --red: #f43f5e;
+      --red-bg: rgba(244,63,94,0.12);
+      --yellow: #f59e0b;
+      --yellow-bg: rgba(245,158,11,0.12);
+      --purple: #a78bfa;
+      --purple-bg: rgba(167,139,250,0.12);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'SF Pro Display', -apple-system, 'Segoe UI', sans-serif;
+      min-height: 100dvh;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* HEADER */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(15,23,42,0.95);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      padding-top: calc(12px + env(safe-area-inset-top));
+    }
+    .header-row { display: flex; align-items: center; justify-content: space-between; }
+    .app-title { font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; }
+    .month-nav { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    .nav-btn {
+      background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); color: var(--text);
+      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 18px;
+    }
+    .nav-btn:active { background: var(--accent2); }
+    .month-title { flex: 1; font-size: 18px; font-weight: 700; }
+
+    /* CAPITAL BAR */
+    .capital-bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px; background: var(--bg);
+      border-bottom: 1px solid var(--border); flex-wrap: wrap; gap: 8px;
+    }
+    .capital-info { flex: 1; min-width: 160px; }
+    .capital-label { font-size: 11px; color: var(--muted); }
+    .capital-value { font-size: 17px; font-weight: 700; color: var(--accent); margin-top: 2px; }
+    .capital-origin { font-size: 11px; color: var(--muted); }
+    .capital-inputs { display: flex; gap: 6px; align-items: center; }
+    .config-input, .config-select {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); color: var(--text);
+      font-size: 13px; font-weight: 600; padding: 6px 8px; outline: none;
+    }
+    .config-input { width: 100px; }
+    .config-select { width: 82px; }
+    .config-input:focus, .config-select:focus { border-color: var(--accent); }
+
+    /* LEGEND */
+    .legend {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      padding: 7px 16px; font-size: 11px; color: var(--muted);
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* STATS */
+    .stats-grid { display: grid; grid-template-columns: repeat(2,1fr); gap: 10px; padding: 12px 16px; }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 11px 13px;
+    }
+    .stat-card.accent { border-color: rgba(249,115,22,0.3); background: rgba(249,115,22,0.07); }
+    .stat-card.global { border-color: rgba(167,139,250,0.25); background: rgba(167,139,250,0.06); grid-column: span 2; }
+    .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+    .stat-value { font-size: 20px; font-weight: 700; line-height: 1; }
+    .stat-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .stat-row { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 4px; }
+    .stat-mini { font-size: 12px; font-weight: 600; }
+    .pos { color: var(--green); } .neg { color: var(--red); }
+    .neu { color: var(--muted); } .acc { color: var(--accent); } .pur { color: var(--purple); }
+
+    /* TABLE */
+    .table-wrap { padding: 0 16px 110px; overflow-x: auto; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 660px; }
+    thead th {
+      font-size: 10px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.05em;
+      padding: 10px 7px 8px; text-align: center;
+      border-bottom: 1px solid var(--border2);
+      background: var(--bg); white-space: nowrap;
+    }
+    thead th:first-child { text-align: left; }
+    thead th.dep-col { color: var(--yellow); }
+    tbody tr:hover { background: rgba(255,255,255,0.025); }
+    tbody tr.week-sep td { border-top: 2px solid var(--border2); }
+    tbody tr.weekend td { background: rgba(255,255,255,0.015); }
+    tbody tr.weekend td:first-child .day-name { color: var(--accent); }
+    td {
+      padding: 6px 7px; text-align: center;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px; vertical-align: middle;
+    }
+    td:first-child { text-align: left; }
+    .day-name { font-weight: 600; font-size: 12px; }
+    .day-date { font-size: 10px; color: var(--muted); margin-top: 1px; }
+    .week-badge {
+      display: inline-block; font-size: 9px; color: var(--accent);
+      background: rgba(249,115,22,0.15); border-radius: 4px;
+      padding: 1px 5px; margin-bottom: 2px; font-weight: 600;
+    }
+    .no-play { font-size: 11px; color: var(--muted); font-style: italic; }
+
+    /* INPUTS */
+    .val-input, .gp-input {
+      width: 76px; background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); color: var(--text);
+      font-size: 12px; font-weight: 600; padding: 5px 5px;
+      text-align: center; outline: none;
+    }
+    .val-input:focus { border-color: var(--accent); }
+    .gp-input { background: rgba(16,185,129,0.06); border-color: rgba(16,185,129,0.2); color: var(--green); }
+    .gp-input:focus { border-color: var(--green); }
+    .gp-input.is-neg { background: var(--red-bg); border-color: rgba(244,63,94,0.3); color: var(--red); }
+    .val-input::placeholder, .gp-input::placeholder { color: var(--muted); font-weight: 400; font-style: italic; }
+
+    .dep-input {
+      width: 70px; background: var(--yellow-bg); border: 1px solid rgba(245,158,11,0.3);
+      border-radius: var(--radius-sm); color: var(--yellow);
+      font-size: 12px; font-weight: 600; padding: 5px 5px;
+      text-align: center; outline: none;
+    }
+    .dep-input:focus { border-color: var(--yellow); }
+    .dep-input::placeholder { color: rgba(245,158,11,0.4); font-weight: 400; }
+
+    .dep-badge {
+      display: inline-flex; align-items: center; gap: 3px;
+      padding: 2px 7px; border-radius: 20px; font-size: 11px; font-weight: 600;
+      background: var(--yellow-bg); color: var(--yellow);
+    }
+
+    .pct-pill {
+      display: inline-block; padding: 2px 7px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+    }
+    .pct-pill.pos { background: var(--green-bg); color: var(--green); }
+    .pct-pill.neg { background: var(--red-bg); color: var(--red); }
+    .pct-pill.neu { background: var(--surface2); color: var(--muted); }
+    .pct-pill.zero { background: var(--surface2); color: var(--muted); }
+
+    tr.total-row td {
+      background: rgba(249,115,22,0.06);
+      border-top: 1px solid rgba(249,115,22,0.25);
+      border-bottom: none; font-weight: 700; font-size: 12px;
+    }
+
+    /* INSTALL HINT */
+    .install-hint {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(15,23,42,0.97); border-top: 1px solid var(--border2);
+      padding: 10px 40px 10px 16px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      font-size: 12px; color: var(--muted); text-align: center;
+    }
+    .install-hint span { color: var(--accent); font-weight: 600; }
+    .hint-close {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <a href="index.html" style="color:var(--muted);font-size:20px;text-decoration:none;margin-right:8px">‹</a><div class="app-title">🎰 Roulette Tracker</div>
+    <div style="font-size:11px;color:var(--muted)" id="days-count"></div>
+  </div>
+  <div class="month-nav">
+    <button class="nav-btn" onclick="changeMonth(-1)">&#8249;</button>
+    <div class="month-title" id="month-title"></div>
+    <button class="nav-btn" onclick="changeMonth(1)">&#8250;</button>
+  </div>
+</div>
+
+<div class="capital-bar">
+  <div class="capital-info">
+    <div class="capital-label">Bankroll de départ du mois</div>
+    <div class="capital-value" id="capital-display">—</div>
+    <div class="capital-origin" id="capital-origin"></div>
+  </div>
+  <div class="capital-inputs">
+    <div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Forcer montant</div>
+      <input class="config-input" type="number" id="capital-override" placeholder="Auto" step="10" min="0"
+        onchange="saveCapitalOverride(); render()" />
+    </div>
+    <div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:3px">Devise</div>
+      <select class="config-select" id="currency" onchange="render()">
+        <option value="€">€ EUR</option>
+        <option value="$">$ USD</option>
+        <option value="USDT">USDT</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="legend">
+  <span>🟢 Valeur bankroll = solde en fin de session</span>
+  <span>🟢/🔴 Gain/Perte = résultat net de la session</span>
+  <span>🟡 Dépôt positif · Retrait négatif</span>
+  <span>0 = session nulle · vide = pas joué</span>
+</div>
+
+<div class="stats-grid" id="stats-grid"></div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align:left">Jour</th>
+        <th>Bankroll fin</th>
+        <th>Gain / Perte</th>
+        <th class="dep-col">Dépôt/Retrait</th>
+        <th>% Session</th>
+        <th>Moy. mois</th>
+        <th>Cumul mois</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<div class="install-hint" id="install-hint">
+  📱 <span>iPhone :</span> Partager → "Sur l'écran d'accueil" &nbsp;|&nbsp; <span>Android :</span> Menu ⋮ → "Installer l'appli"
+  <button class="hint-close" onclick="this.parentElement.style.display='none'">×</button>
+</div>
+
+<script>
+const JOURS = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+const JOURS_FULL = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const FIRST_YEAR = 2025, FIRST_MONTH = 4;
+
+let year = 2025, month = 4;
+
+/* ---- STORAGE ---- */
+function fmtKey(d, sfx) { return `rt_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}${sfx||''}`; }
+function fmtMKey(y, m, sfx) { return `rt_m_${y}_${m}${sfx||''}`; }
+function ls(k) { try { return localStorage.getItem(k); } catch(e) { return null; } }
+function lsSet(k, v) { try { if(v===''||v===null) localStorage.removeItem(k); else localStorage.setItem(k,v); } catch(e){} }
+
+/* ---- CAPITAL ---- */
+function getLastValOfMonth(y, m) {
+  const days = getAllDaysOf(y, m);
+  for (let i = days.length - 1; i >= 0; i--) {
+    const v = ls(fmtKey(days[i], '_bank'));
+    if (v !== null && v !== '') return parseFloat(v);
+  }
+  return null;
+}
+
+function getCapital(y, m) {
+  const ov = ls(fmtMKey(y, m, '_cap'));
+  if (ov !== null && ov !== '') return { val: parseFloat(ov), origin: 'saisi manuellement' };
+  let py = y, pm = m - 1;
+  if (pm < 0) { pm = 11; py--; }
+  const prev = getLastValOfMonth(py, pm);
+  if (prev !== null) return { val: prev, origin: `report de ${MONTHS[pm]} ${py}` };
+  return { val: 500, origin: 'défaut — premier mois' };
+}
+
+function saveCapitalOverride() {
+  lsSet(fmtMKey(year, month, '_cap'), document.getElementById('capital-override').value);
+}
+
+/* ---- DAYS ---- */
+function getAllDaysOf(y, m) {
+  const days = [];
+  const d = new Date(y, m, 1, 12, 0, 0);
+  while (d.getMonth() === m) { days.push(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0)); d.setDate(d.getDate() + 1); }
+  return days;
+}
+
+/* ---- NAV ---- */
+function changeMonth(delta) {
+  month += delta;
+  if (month < 0) { month = 11; year--; }
+  if (month > 11) { month = 0; year++; }
+  const ov = ls(fmtMKey(year, month, '_cap'));
+  document.getElementById('capital-override').value = ov || '';
+  render();
+}
+
+/* ---- GLOBAL STATS ---- */
+function getGlobalStats() {
+  let firstCapital = null, currentVal = null;
+  let totalPureGain = 0, totalDeposits = 0;
+  let sessionsPlayed = 0, winSessions = 0, lossSessions = 0;
+
+  let y = FIRST_YEAR, m = FIRST_MONTH;
+  while (y < year || (y === year && m <= month)) {
+    const cap = getCapital(y, m);
+    if (firstCapital === null) firstCapital = cap.val;
+    const days = getAllDaysOf(y, m);
+    let prevVal = cap.val;
+    days.forEach(d => {
+      const rawBank = ls(fmtKey(d, '_bank'));
+      const rawGP   = ls(fmtKey(d, '_gp'));
+      const rawDep  = ls(fmtKey(d, '_dep'));
+      const dep = rawDep !== null && rawDep !== '' ? parseFloat(rawDep) : 0;
+      if (dep !== 0) totalDeposits += dep;
+
+      // On utilise bankroll si dispo, sinon on reconstitue depuis gain/perte
+      let bank = null;
+      if (rawBank !== null && rawBank !== '') {
+        bank = parseFloat(rawBank);
+      } else if (rawGP !== null && rawGP !== '') {
+        bank = prevVal + dep + parseFloat(rawGP);
+      }
+
+      if (bank !== null) {
+        const realGain = bank - dep - prevVal;
+        totalPureGain += realGain;
+        sessionsPlayed++;
+        if (realGain > 0) winSessions++;
+        else if (realGain < 0) lossSessions++;
+        prevVal = bank;
+        currentVal = bank;
+      }
+    });
+    m++; if (m > 11) { m = 0; y++; }
+  }
+  return { firstCapital, currentVal, totalPureGain, totalDeposits,
+    totalPct: firstCapital ? (totalPureGain / firstCapital) * 100 : 0,
+    sessionsPlayed, winSessions, lossSessions };
+}
+
+/* ---- RENDER ---- */
+function render() {
+  const currency = document.getElementById('currency').value;
+  const allDays = getAllDaysOf(year, month);
+  const capInfo = getCapital(year, month);
+  const capital = capInfo.val;
+
+  document.getElementById('month-title').textContent = `${MONTHS[month]} ${year}`;
+  document.getElementById('capital-display').textContent = capital.toFixed(2) + ' ' + currency;
+  document.getElementById('capital-origin').textContent = '(' + capInfo.origin + ')';
+
+  let tbody = '';
+  let prevVal = capital;
+  let pctSum = 0, pctCount = 0, lastVal = capital;
+  let totalDeposits = 0, cumulGain = 0;
+  let sessionsJouees = 0, wins = 0, losses = 0;
+  let weekPrev = -1;
+
+  allDays.forEach((d, i) => {
+    const dow = d.getDay(); // 0=dim, 6=sam
+    const isWeekend = dow === 0 || dow === 6;
+
+    // Début de semaine (lundi ou 1er du mois)
+    const isWeekStart = dow === 1 || i === 0;
+    const monday = new Date(d);
+    const diffToMon = (dow === 0) ? -6 : 1 - dow;
+    monday.setDate(d.getDate() + diffToMon);
+    const wn = Math.round((monday - new Date(year, month, 1)) / (7*24*3600*1000));
+    if (isWeekStart) weekPrev = wn;
+
+    const rawBank = ls(fmtKey(d, '_bank'));
+    const rawGP   = ls(fmtKey(d, '_gp'));
+    const rawDep  = ls(fmtKey(d, '_dep'));
+
+    const dep = rawDep !== null && rawDep !== '' ? parseFloat(rawDep) : 0;
+    if (dep !== 0) totalDeposits += dep;
+
+    // Bankroll : saisie directe OU reconstituée depuis gain/perte
+    let bank = null;
+    if (rawBank !== null && rawBank !== '') {
+      bank = parseFloat(rawBank);
+    } else if (rawGP !== null && rawGP !== '') {
+      bank = prevVal + dep + parseFloat(rawGP);
+    }
+
+    // Gain/Perte : saisi OU calculé depuis bankroll
+    let gp = null;
+    if (rawGP !== null && rawGP !== '') {
+      gp = parseFloat(rawGP);
+    } else if (bank !== null) {
+      gp = bank - dep - prevVal;
+    }
+
+    const played = bank !== null || gp !== null;
+    let pct = null;
+    if (played && prevVal !== 0) {
+      const realGain = bank !== null ? bank - dep - prevVal : gp;
+      pct = (realGain / prevVal) * 100;
+      cumulGain += realGain;
+      pctSum += pct;
+      pctCount++;
+      sessionsJouees++;
+      if (realGain > 0) wins++;
+      else if (realGain < 0) losses++;
+      if (bank !== null) lastVal = bank;
+    }
+
+    const avgPct = pctCount > 0 ? pctSum / pctCount : null;
+    const cumulPct = capital > 0 ? (cumulGain / capital) * 100 : 0;
+
+    // Couleurs
+    const gpColor = gp === null ? 'var(--muted)' : (gp > 0 ? 'var(--green)' : gp < 0 ? 'var(--red)' : 'var(--muted)');
+    const pctCls = pct === null ? 'neu' : (pct > 0 ? 'pos' : pct < 0 ? 'neg' : 'zero');
+    const avgCls = avgPct === null ? 'neu' : (avgPct > 0 ? 'pos' : avgPct < 0 ? 'neg' : 'zero');
+    const cumulColor = cumulGain > 0 ? 'var(--green)' : cumulGain < 0 ? 'var(--red)' : 'var(--muted)';
+
+    // Dépôt cell
+    const depCell = dep !== 0
+      ? `<div style="display:flex;align-items:center;justify-content:center;gap:3px">
+           <span class="dep-badge">${dep > 0 ? '+' : ''}${dep.toFixed(0)} ${currency}</span>
+           <button onclick="lsSet(fmtKey(new Date(${d.getFullYear()},${d.getMonth()},${d.getDate()}),'_dep'),'');render()"
+             style="background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer">×</button>
+         </div>`
+      : `<input class="dep-input" type="number" step="1" placeholder="0"
+           onchange="lsSet(fmtKey(new Date(${d.getFullYear()},${d.getMonth()},${d.getDate()}),'_dep'),this.value);render()" />`;
+
+    // GP input style
+    const gpVal = rawGP !== null && rawGP !== '' ? parseFloat(rawGP) : null;
+    const gpInputCls = gpVal !== null && gpVal < 0 ? 'gp-input is-neg' : 'gp-input';
+
+    const rowCls = [isWeekStart && i > 0 ? 'week-sep' : '', isWeekend ? 'weekend' : ''].filter(Boolean).join(' ');
+
+    tbody += `<tr class="${rowCls}">
+      <td>
+        ${isWeekStart && i > 0 ? `<div class="week-badge">SEM. ${wn + 1}</div>` : ''}
+        <div class="day-name">${JOURS_FULL[dow]}</div>
+        <div class="day-date">${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</div>
+      </td>
+      <td>
+        <input class="val-input" type="number" step="0.01" min="0" placeholder="Bankroll"
+          value="${rawBank !== null && rawBank !== '' ? parseFloat(rawBank).toFixed(2) : ''}"
+          onchange="lsSet(fmtKey(new Date(${d.getFullYear()},${d.getMonth()},${d.getDate()}),'_bank'),this.value);render()" />
+      </td>
+      <td>
+        <input class="${gpInputCls}" type="number" step="0.01" placeholder="±"
+          value="${rawGP !== null && rawGP !== '' ? parseFloat(rawGP).toFixed(2) : ''}"
+          onchange="lsSet(fmtKey(new Date(${d.getFullYear()},${d.getMonth()},${d.getDate()}),'_gp'),this.value);render()" />
+      </td>
+      <td>${depCell}</td>
+      <td><span class="pct-pill ${pctCls}">${pct !== null ? (pct > 0 ? '+' : '') + pct.toFixed(2) + '%' : '—'}</span></td>
+      <td><span class="pct-pill ${avgCls}">${avgPct !== null ? (avgPct > 0 ? '+' : '') + avgPct.toFixed(2) + '%' : '—'}</span></td>
+      <td style="font-size:12px;color:${cumulColor};font-weight:600">${sessionsJouees > 0 ? (cumulGain > 0 ? '+' : '') + cumulGain.toFixed(2) + ' ' + currency : '—'}</td>
+    </tr>`;
+
+    if (bank !== null) prevVal = bank;
+  });
+
+  // Bilan
+  const avgPctFinal = pctCount > 0 ? pctSum / pctCount : null;
+  const pureGain = lastVal - capital - totalDeposits;
+  const totalPct = capital > 0 ? (pureGain / capital) * 100 : 0;
+  const winRate = sessionsJouees > 0 ? (wins / sessionsJouees) * 100 : null;
+
+  tbody += `<tr class="total-row">
+    <td>Bilan mois</td>
+    <td style="color:var(--accent)">${sessionsJouees > 0 ? lastVal.toFixed(2) + ' ' + currency : '—'}</td>
+    <td style="color:${pureGain >= 0 ? 'var(--green)' : 'var(--red)'}">${sessionsJouees > 0 ? (pureGain >= 0 ? '+' : '') + pureGain.toFixed(2) + ' ' + currency : '—'}</td>
+    <td style="color:var(--yellow)">${totalDeposits !== 0 ? (totalDeposits > 0 ? '+' : '') + totalDeposits.toFixed(0) + ' ' + currency : '—'}</td>
+    <td><span class="pct-pill ${totalPct >= 0 ? 'pos' : 'neg'}">${sessionsJouees > 0 ? (totalPct >= 0 ? '+' : '') + totalPct.toFixed(2) + '%' : '—'}</span></td>
+    <td><span class="pct-pill ${avgPctFinal !== null ? (avgPctFinal >= 0 ? 'pos' : 'neg') : 'neu'}">${avgPctFinal !== null ? (avgPctFinal >= 0 ? '+' : '') + avgPctFinal.toFixed(2) + '%' : '—'}</span></td>
+    <td style="color:${pureGain >= 0 ? 'var(--green)' : 'var(--red)'};font-weight:700">${sessionsJouees > 0 ? (pureGain >= 0 ? '+' : '') + pureGain.toFixed(2) + ' ' + currency : '—'}</td>
+  </tr>`;
+
+  document.getElementById('tbody').innerHTML = tbody;
+  document.getElementById('days-count').textContent = `${sessionsJouees} session${sessionsJouees !== 1 ? 's' : ''}`;
+
+  // Stats globales
+  const g = getGlobalStats();
+  const monthsCount = (year - FIRST_YEAR) * 12 + (month - FIRST_MONTH) + 1;
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">💰 Bankroll ce mois</div>
+      <div class="stat-value acc">${capital.toFixed(2)} ${currency}</div>
+      ${totalDeposits !== 0 ? `<div class="stat-sub" style="color:var(--yellow)">Mvt : ${totalDeposits > 0 ? '+' : ''}${totalDeposits.toFixed(0)} ${currency}</div>` : '<div class="stat-sub">Aucun mouvement</div>'}
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">📊 Résultat mois</div>
+      <div class="stat-value ${sessionsJouees > 0 ? (pureGain >= 0 ? 'pos' : 'neg') : 'neu'}">${sessionsJouees > 0 ? (pureGain >= 0 ? '+' : '') + pureGain.toFixed(2) + ' ' + currency : '—'}</div>
+      <div class="stat-sub ${totalPct >= 0 ? 'pos' : 'neg'}">${sessionsJouees > 0 ? (totalPct >= 0 ? '+' : '') + totalPct.toFixed(2) + '% du bankroll' : 'Hors dépôts/retraits'}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">🎯 Sessions ce mois</div>
+      <div class="stat-value neu">${sessionsJouees}</div>
+      <div class="stat-sub"><span class="pos">${wins}W</span> · <span class="neg">${losses}L</span>${winRate !== null ? ' · <span style="color:var(--yellow)">' + winRate.toFixed(0) + '% win</span>' : ''}</div>
+    </div>
+    <div class="stat-card accent">
+      <div class="stat-label">📈 % moyen / session</div>
+      <div class="stat-value ${avgPctFinal !== null ? (avgPctFinal >= 0 ? 'pos' : 'neg') : 'neu'}">${avgPctFinal !== null ? (avgPctFinal >= 0 ? '+' : '') + avgPctFinal.toFixed(2) + '%' : '—'}</div>
+      <div class="stat-sub">Sur ${sessionsJouees} session${sessionsJouees !== 1 ? 's' : ''}</div>
+    </div>
+    ${g.currentVal !== null ? `
+    <div class="stat-card global">
+      <div class="stat-label">🌍 Performance globale — depuis ${MONTHS[FIRST_MONTH]} ${FIRST_YEAR} (${monthsCount} mois)</div>
+      <div class="stat-row">
+        <div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">Bankroll initiale</div>
+          <div class="stat-mini pur">${g.firstCapital.toFixed(0)} ${currency}</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">Bankroll actuelle</div>
+          <div class="stat-mini acc">${g.currentVal.toFixed(2)} ${currency}</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">Gain total réel</div>
+          <div class="stat-mini ${g.totalPureGain >= 0 ? 'pos' : 'neg'}">${g.totalPureGain >= 0 ? '+' : ''}${g.totalPureGain.toFixed(2)} ${currency}</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">% global</div>
+          <div class="stat-mini ${g.totalPct >= 0 ? 'pos' : 'neg'}">${g.totalPct >= 0 ? '+' : ''}${g.totalPct.toFixed(2)}%</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">Sessions totales</div>
+          <div class="stat-mini neu">${g.sessionsPlayed} <span style="font-size:10px;color:var(--muted)">(${g.winSessions}W / ${g.lossSessions}L)</span></div>
+        </div>
+        ${g.totalDeposits !== 0 ? `<div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:2px">Dépôts nets</div>
+          <div class="stat-mini" style="color:var(--yellow)">${g.totalDeposits >= 0 ? '+' : ''}${g.totalDeposits.toFixed(0)} ${currency}</div>
+        </div>` : ''}
+      </div>
+    </div>` : ''}
+  `;
+}
+
+const savedOv = ls(fmtMKey(year, month, '_cap'));
+if (savedOv) document.getElementById('capital-override').value = savedOv;
+setTimeout(() => { const el = document.getElementById('install-hint'); if(el) el.style.display='none'; }, 8000);
+render();
+</script>
+</body>
+</html>

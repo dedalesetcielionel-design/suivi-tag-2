@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Copy Tracker" />
+  <meta name="theme-color" content="#0f172a" />
+  <title>Copy Trading Tracker</title>
+  <link rel="manifest" href="data:application/json,{&quot;name&quot;:&quot;Copy Trading Tracker&quot;,&quot;short_name&quot;:&quot;Copy Tracker&quot;,&quot;start_url&quot;:&quot;.&quot;,&quot;display&quot;:&quot;standalone&quot;,&quot;background_color&quot;:&quot;%230f172a&quot;,&quot;theme_color&quot;:&quot;%230f172a&quot;,&quot;icons&quot;:[{&quot;src&quot;:&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' rx='100' fill='%230f172a'/%3E%3Ctext x='256' y='330' font-size='280' text-anchor='middle' fill='%2322d3ee'%3E📈%3C/text%3E%3C/svg%3E&quot;,&quot;sizes&quot;:&quot;512x512&quot;,&quot;type&quot;:&quot;image/svg+xml&quot;}]}" />
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface2: #263348;
+      --border: rgba(255,255,255,0.07);
+      --border2: rgba(255,255,255,0.13);
+      --text: #f1f5f9;
+      --muted: #94a3b8;
+      --accent: #22d3ee;
+      --accent2: #0891b2;
+      --green: #10b981;
+      --green-bg: rgba(16,185,129,0.12);
+      --red: #f43f5e;
+      --red-bg: rgba(244,63,94,0.12);
+      --yellow: #f59e0b;
+      --yellow-bg: rgba(245,158,11,0.12);
+      --purple: #a78bfa;
+      --purple-bg: rgba(167,139,250,0.12);
+      --radius: 12px;
+      --radius-sm: 8px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'SF Pro Display', -apple-system, 'Segoe UI', sans-serif;
+      min-height: 100dvh;
+      padding-bottom: env(safe-area-inset-bottom);
+    }
+
+    /* HEADER */
+    .header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(15,23,42,0.95);
+      backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 12px 16px;
+      padding-top: calc(12px + env(safe-area-inset-top));
+    }
+    .header-row { display: flex; align-items: center; justify-content: space-between; }
+    .app-title { font-size: 13px; font-weight: 600; color: var(--accent); letter-spacing: 0.08em; text-transform: uppercase; }
+    .month-nav { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    .nav-btn {
+      background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); color: var(--text);
+      width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+      cursor: pointer; font-size: 16px;
+    }
+    .nav-btn:active { background: var(--accent2); }
+    .month-title { flex: 1; font-size: 18px; font-weight: 700; color: var(--text); }
+
+    /* CAPITAL BAR */
+    .capital-bar {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 16px;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-size: 13px;
+    }
+    .capital-label { color: var(--muted); white-space: nowrap; }
+    .capital-value { font-size: 16px; font-weight: 700; color: var(--accent); }
+    .capital-origin { font-size: 11px; color: var(--muted); }
+    .capital-edit {
+      margin-left: auto; display: flex; align-items: center; gap: 6px;
+    }
+    .capital-input-wrap { display: flex; gap: 6px; align-items: center; }
+    .config-input, .config-select {
+      background: var(--surface); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); color: var(--text);
+      font-size: 13px; font-weight: 600; padding: 6px 8px; outline: none;
+    }
+    .config-input { width: 100px; }
+    .config-select { width: 80px; }
+    .config-input:focus, .config-select:focus { border-color: var(--accent); }
+    .small-btn {
+      background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); color: var(--muted);
+      font-size: 11px; padding: 5px 10px; cursor: pointer; white-space: nowrap;
+    }
+    .small-btn:active { background: var(--accent2); color: var(--text); }
+
+    /* LEGEND */
+    .legend {
+      display: flex; gap: 14px; padding: 7px 16px;
+      font-size: 11px; color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    /* STATS */
+    .stats-grid {
+      display: grid; grid-template-columns: repeat(2, 1fr);
+      gap: 10px; padding: 12px 16px;
+    }
+    .stat-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 11px 13px;
+    }
+    .stat-card.accent { border-color: rgba(34,211,238,0.25); background: rgba(34,211,238,0.06); }
+    .stat-card.global { border-color: rgba(167,139,250,0.25); background: rgba(167,139,250,0.06); grid-column: span 2; }
+    .stat-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+    .stat-value { font-size: 20px; font-weight: 700; line-height: 1; }
+    .stat-row { display: flex; gap: 16px; margin-top: 4px; }
+    .stat-sub { font-size: 11px; color: var(--muted); margin-top: 3px; }
+    .stat-mini { font-size: 12px; font-weight: 600; }
+    .pos { color: var(--green); } .neg { color: var(--red); }
+    .neu { color: var(--muted); } .acc { color: var(--accent); } .pur { color: var(--purple); }
+
+    /* TABLE */
+    .table-wrap { padding: 0 16px 110px; overflow-x: auto; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 640px; }
+    thead th {
+      font-size: 10px; font-weight: 600; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 0.06em;
+      padding: 10px 8px 8px; text-align: center;
+      border-bottom: 1px solid var(--border2);
+      position: sticky; top: 0; background: var(--bg); white-space: nowrap;
+    }
+    thead th:first-child { text-align: left; }
+    thead th.dep-col { color: var(--yellow); }
+    tbody tr:hover { background: rgba(255,255,255,0.025); }
+    tbody tr.week-sep td { border-top: 1px solid var(--border2); }
+    td {
+      padding: 7px 8px; text-align: center;
+      border-bottom: 1px solid var(--border);
+      font-size: 13px; vertical-align: middle;
+    }
+    td:first-child { text-align: left; }
+    .day-name { font-weight: 600; font-size: 13px; color: var(--text); }
+    .day-date { font-size: 10px; color: var(--muted); margin-top: 2px; }
+    .week-badge {
+      display: inline-block; font-size: 9px; color: var(--accent);
+      background: rgba(34,211,238,0.12); border-radius: 4px;
+      padding: 1px 5px; margin-bottom: 3px; font-weight: 600; letter-spacing: 0.04em;
+    }
+    .val-input {
+      width: 82px; background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); color: var(--text);
+      font-size: 12px; font-weight: 600; padding: 5px 6px;
+      text-align: center; outline: none;
+    }
+    .val-input:focus { border-color: var(--accent); }
+    .val-input::placeholder { color: var(--muted); font-weight: 400; }
+    .dep-input {
+      width: 58px; background: var(--yellow-bg); border: 1px solid rgba(245,158,11,0.3);
+      border-radius: var(--radius-sm); color: var(--yellow);
+      font-size: 12px; font-weight: 600; padding: 5px 6px;
+      text-align: center; outline: none;
+    }
+    .dep-input:focus { border-color: var(--yellow); }
+    .dep-input::placeholder { color: rgba(245,158,11,0.35); font-weight: 400; }
+    .dep-type-select {
+      width: 46px; background: var(--surface2); border: 1px solid var(--border2);
+      border-radius: var(--radius-sm); color: var(--text);
+      font-size: 13px; font-weight: 700; padding: 5px 2px;
+      text-align: center; outline: none; cursor: pointer;
+    }
+    .dep-type-select:focus { border-color: var(--accent); }
+    .pct-pill {
+      display: inline-block; padding: 3px 7px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+    }
+    .pct-pill.pos { background: var(--green-bg); color: var(--green); }
+    .pct-pill.neg { background: var(--red-bg); color: var(--red); }
+    .pct-pill.neu { background: var(--surface2); color: var(--muted); }
+    .dep-badge {
+      display: inline-block; padding: 2px 6px; border-radius: 20px;
+      font-size: 11px; font-weight: 600;
+      background: var(--yellow-bg); color: var(--yellow);
+    }
+    tr.total-row td {
+      background: rgba(34,211,238,0.05);
+      border-top: 1px solid rgba(34,211,238,0.2);
+      border-bottom: none; font-weight: 700; font-size: 12px;
+    }
+
+    /* INSTALL HINT */
+    .install-hint {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(15,23,42,0.97); border-top: 1px solid var(--border2);
+      padding: 10px 40px 10px 16px;
+      padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      font-size: 12px; color: var(--muted); text-align: center;
+    }
+    .install-hint span { color: var(--accent); font-weight: 600; }
+    .hint-close {
+      position: absolute; right: 14px; top: 50%; transform: translateY(-50%);
+      background: none; border: none; color: var(--muted); font-size: 20px; cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-row">
+    <a href="index.html" style="color:var(--muted);font-size:20px;text-decoration:none;margin-right:8px">‹</a><div class="app-title">📈 Copy Tracker</div>
+    <div style="font-size:11px;color:var(--muted)" id="days-count"></div>
+  </div>
+  <div class="month-nav">
+    <button class="nav-btn" onclick="changeMonth(-1)">&#8249;</button>
+    <div class="month-title" id="month-title"></div>
+    <button class="nav-btn" onclick="changeMonth(1)">&#8250;</button>
+  </div>
+</div>
+
+<div class="capital-bar">
+  <div>
+    <div class="capital-label">Capital de départ du mois</div>
+    <div style="display:flex;align-items:baseline;gap:8px;margin-top:2px">
+      <span class="capital-value" id="capital-display">—</span>
+      <span class="capital-origin" id="capital-origin"></span>
+    </div>
+  </div>
+  <div class="capital-edit">
+    <div class="capital-input-wrap">
+      <input class="config-input" type="number" id="capital-override" placeholder="Forcer" step="100" min="0"
+        title="Laisser vide = report auto du mois précédent" onchange="saveCapitalOverride(); render()" />
+      <select class="config-select" id="currency" onchange="render()">
+        <option value="€">€ EUR</option>
+        <option value="$">$ USD</option>
+        <option value="USDT">USDT</option>
+      </select>
+    </div>
+  </div>
+</div>
+
+<div class="legend">
+  <span>🟡 Choisis ➕ Dépôt ou ➖ Retrait, puis saisis un montant positif</span>
+  <span style="color:var(--purple)">🟣 Stats globales = depuis le 1er mois saisi</span>
+</div>
+
+<div class="stats-grid" id="stats-grid"></div>
+
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th style="text-align:left">Jour</th>
+        <th>Valeur compte</th>
+        <th class="dep-col">Dépôt/Retrait</th>
+        <th>Gain/Perte réel</th>
+        <th>% Jour réel</th>
+        <th>Moy. mois</th>
+        <th>Estimation</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+</div>
+
+<div class="install-hint" id="install-hint">
+  📱 <span>iPhone :</span> Partager → "Sur l'écran d'accueil" &nbsp;|&nbsp; <span>Android :</span> Menu ⋮ → "Installer l'appli"
+  <button class="hint-close" onclick="this.parentElement.style.display='none'">×</button>
+</div>
+
+<script>
+const DAYS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi'];
+const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+const FIRST_YEAR = 2025, FIRST_MONTH = 4; // Mai 2025
+
+const _now = new Date();
+let year = _now.getFullYear(), month = _now.getMonth();
+
+/* ---- STORAGE HELPERS ---- */
+function fmtKey(d, sfx) { return `ct_${d.getFullYear()}_${d.getMonth()}_${d.getDate()}${sfx||''}`; }
+function fmtMonthKey(y, m, sfx) { return `ct_m_${y}_${m}${sfx||''}`; }
+
+function ls(key) { try { return localStorage.getItem(key); } catch(e) { return null; } }
+function lsSet(key, val) { try { if(val===''||val===null) localStorage.removeItem(key); else localStorage.setItem(key,val); } catch(e){} }
+
+/* ---- DEPOSIT/WITHDRAWAL INPUT HELPER ----
+   Lit le signe choisi dans le <select> et le montant (toujours positif tapé),
+   calcule la valeur signée et l'enregistre. Ne touche jamais aux valeurs déjà stockées. */
+function saveDep(y, m, day, selectId, amountId) {
+  const sign = parseInt(document.getElementById(selectId).value, 10);
+  const raw = document.getElementById(amountId).value;
+  const amount = raw !== '' ? Math.abs(parseFloat(raw)) : NaN;
+  const v = !isNaN(amount) ? (sign * amount) : '';
+  lsSet(fmtKey(new Date(y, m, day, 12, 0, 0), '_dep'), v === '' ? '' : String(v));
+  render();
+}
+
+/* ---- CAPITAL LOGIC ---- */
+// Retourne la dernière valeur saisie d'un mois donné
+function getLastValOfMonth(y, m) {
+  const days = getWorkdaysOf(y, m);
+  for (let i = days.length - 1; i >= 0; i--) {
+    const v = ls(fmtKey(days[i], ''));
+    if (v !== null && v !== '') return parseFloat(v);
+  }
+  return null;
+}
+
+// Capital de départ effectif du mois courant :
+// 1. Override manuel saisi par l'utilisateur
+// 2. Sinon : dernière valeur du mois précédent
+// 3. Sinon : 1000 par défaut (premier mois)
+function getCapitalForMonth(y, m) {
+  const override = ls(fmtMonthKey(y, m, '_cap'));
+  if (override !== null && override !== '') return { val: parseFloat(override), origin: 'manuel' };
+
+  let py = y, pm = m - 1;
+  if (pm < 0) { pm = 11; py--; }
+  const prev = getLastValOfMonth(py, pm);
+  if (prev !== null) return { val: prev, origin: `report de ${MONTHS[pm]} ${py}` };
+
+  return { val: 1000, origin: 'défaut' };
+}
+
+function saveCapitalOverride() {
+  const v = document.getElementById('capital-override').value;
+  lsSet(fmtMonthKey(year, month, '_cap'), v);
+}
+
+/* ---- WORKDAYS ---- */
+function getWorkdaysOf(y, m) {
+  const days = [];
+  const d = new Date(y, m, 1, 12, 0, 0);
+  while (d.getMonth() === m) {
+    if (d.getDay() >= 1 && d.getDay() <= 5) days.push(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12, 0, 0));
+    d.setDate(d.getDate() + 1);
+  }
+  return days;
+}
+
+/* ---- NAVIGATION ---- */
+function changeMonth(delta) {
+  month += delta;
+  if (month < 0) { month = 11; year--; }
+  if (month > 11) { month = 0; year++; }
+  // Sync override field
+  const ov = ls(fmtMonthKey(year, month, '_cap'));
+  document.getElementById('capital-override').value = ov || '';
+  render();
+}
+
+/* ---- GLOBAL STATS ---- */
+// Parcourt tous les mois depuis le premier jusqu'au mois courant
+function getGlobalStats(currentCapInfo) {
+  const now = new Date();
+  let totalPureGain = 0;
+  let firstCapital = null;
+  let currentVal = null;
+  let totalDeposits = 0;
+
+  let y = FIRST_YEAR, m = FIRST_MONTH;
+  while (y < year || (y === year && m <= month)) {
+    const capInfo = getCapitalForMonth(y, m);
+    if (firstCapital === null) firstCapital = capInfo.val;
+
+    const days = getWorkdaysOf(y, m);
+    let prevVal = capInfo.val;
+
+    days.forEach(d => {
+      const rawDep = ls(fmtKey(d, '_dep'));
+      const rawVal = ls(fmtKey(d, ''));
+      const dep = rawDep !== null && rawDep !== '' ? parseFloat(rawDep) : 0;
+      const val = rawVal !== null && rawVal !== '' ? parseFloat(rawVal) : null;
+      if (dep !== 0) totalDeposits += dep;
+      if (val !== null) {
+        totalPureGain += val - dep - prevVal;
+        prevVal = val;
+        currentVal = val;
+      }
+    });
+
+    m++;
+    if (m > 11) { m = 0; y++; }
+  }
+
+  return {
+    firstCapital,
+    currentVal,
+    totalDeposits,
+    totalPureGain,
+    totalPct: firstCapital ? (totalPureGain / firstCapital) * 100 : 0
+  };
+}
+
+/* ---- RENDER ---- */
+function render() {
+  const currency = document.getElementById('currency').value;
+  const workdays = getWorkdaysOf(year, month);
+  const capInfo = getCapitalForMonth(year, month);
+  const capital = capInfo.val;
+
+  document.getElementById('month-title').textContent = `${MONTHS[month]} ${year}`;
+  document.getElementById('capital-display').textContent = capital.toFixed(2) + ' ' + currency;
+  document.getElementById('capital-origin').textContent = capInfo.origin === 'manuel' ? '(saisi manuellement)' : capInfo.origin !== 'défaut' ? '(' + capInfo.origin + ')' : '(défaut — premier mois)';
+
+  let tbody = '';
+  let prevVal = null;
+  let pctSum = 0, pctCount = 0, lastVal = capital;
+  let weekPrev = -1;
+  let totalDeposits = 0;
+
+  workdays.forEach((d, i) => {
+    const rawVal = ls(fmtKey(d, ''));
+    const rawDep = ls(fmtKey(d, '_dep'));
+    const val = rawVal !== null && rawVal !== '' ? parseFloat(rawVal) : null;
+    const dep = rawDep !== null && rawDep !== '' ? parseFloat(rawDep) : 0;
+    const prev = i === 0 ? capital : prevVal;
+
+    if (dep !== 0) totalDeposits += dep;
+
+    // Semaine calendaire réelle
+    const isWeekStart = d.getDay() === 1 || i === 0;
+    const monday = new Date(d);
+    monday.setDate(d.getDate() - (d.getDay() - 1));
+    const wn = Math.round((monday - new Date(year, month, 1)) / (7*24*3600*1000));
+    if (isWeekStart) weekPrev = wn;
+
+    // Gain réel = valeur - dépôt - valeur veille
+    let pct = null, gainAbs = null;
+    if (val !== null && prev !== null) {
+      gainAbs = val - dep - prev;
+      pct = prev !== 0 ? (gainAbs / prev) * 100 : 0;
+      pctSum += pct;
+      pctCount++;
+      lastVal = val;
+    }
+
+    const avgPct = pctCount > 0 ? pctSum / pctCount : null;
+
+    // Estimation : jours restants sans valeur
+    const remaining = workdays.slice(i + 1).filter(dd => {
+      const r = ls(fmtKey(dd, ''));
+      return r === null || r === '';
+    }).length;
+
+    let estim = null;
+    if (avgPct !== null) {
+      let v = val !== null ? val : lastVal;
+      for (let r = 0; r < remaining; r++) v = v * (1 + avgPct / 100);
+      estim = v;
+    }
+
+    const pctCls = pct === null ? 'neu' : (pct >= 0 ? 'pos' : 'neg');
+    const avgCls = avgPct === null ? 'neu' : (avgPct >= 0 ? 'pos' : 'neg');
+    const gainColor = gainAbs === null ? 'var(--muted)' : (gainAbs >= 0 ? 'var(--green)' : 'var(--red)');
+    const estimStyle = estim !== null
+      ? `font-size:11px;color:${estim >= capital ? 'var(--green)' : 'var(--red)'}`
+      : `font-size:11px;color:var(--muted)`;
+
+    // Cellule Dépôt/Retrait :
+    // - si une valeur est déjà enregistrée pour ce jour -> badge ➕/➖ + bouton de suppression (comportement inchangé)
+    // - sinon -> sélecteur ➕/➖ + champ de montant TOUJOURS positif (nouveau comportement)
+    const selectId = `dep-sign-${i}`;
+    const amountId = `dep-amt-${i}`;
+    const depCell = dep !== 0
+      ? `<div style="display:flex;align-items:center;justify-content:center;gap:4px">
+           <span class="dep-badge">${dep > 0 ? '➕' : '➖'} ${Math.abs(dep).toFixed(0)} ${currency}</span>
+           <button onclick="lsSet(fmtKey(new Date(${d.getFullYear()},${d.getMonth()},${d.getDate()},12,0,0),'_dep'),'');render()"
+             style="background:none;border:none;color:var(--muted);font-size:14px;cursor:pointer;line-height:1">×</button>
+         </div>`
+      : `<div style="display:flex;align-items:center;justify-content:center;gap:3px">
+           <select class="dep-type-select" id="${selectId}" title="Dépôt ou retrait ?">
+             <option value="1">➕</option>
+             <option value="-1">➖</option>
+           </select>
+           <input class="dep-input" id="${amountId}" type="number" step="1" min="0" placeholder="0"
+             onchange="saveDep(${d.getFullYear()},${d.getMonth()},${d.getDate()},'${selectId}','${amountId}')" />
+         </div>`;
+
+    tbody += `<tr class="${isWeekStart && i > 0 ? 'week-sep' : ''}">
+      <td>
+        ${isWeekStart ? `<div class="week-badge">SEM. ${wn + 1}</div>` : ''}
+        <div class="day-name">${DAYS[d.getDay()-1]}</div>
+        <div class="day-date">${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}</div>
+      </td>
+      <td><input class="val-input" type="number" step="0.01" min="0" placeholder="—"
+        value="${val !== null ? val.toFixed(2) : ''}"
+        onchange="lsSet(fmtKey(new Date(${d.getFullYear()},${d.getMonth()},${d.getDate()},12,0,0),''),this.value);render()" /></td>
+      <td>${depCell}</td>
+      <td style="color:${gainColor};font-weight:600">${gainAbs !== null ? (gainAbs >= 0 ? '+' : '') + gainAbs.toFixed(2) + ' ' + currency : '<span style="color:var(--muted)">—</span>'}</td>
+      <td><span class="pct-pill ${pctCls}">${pct !== null ? (pct >= 0 ? '+' : '') + pct.toFixed(2) + '%' : '—'}</span></td>
+      <td><span class="pct-pill ${avgCls}">${avgPct !== null ? (avgPct >= 0 ? '+' : '') + avgPct.toFixed(2) + '%' : '—'}</span></td>
+      <td style="${estimStyle}">${estim !== null ? '≈' + estim.toFixed(2) + ' ' + currency : '—'}</td>
+    </tr>`;
+
+    if (val !== null) prevVal = val;
+    else if (i === 0) prevVal = capital;
+  });
+
+  // Bilan mois
+  const avgPctFinal = pctCount > 0 ? pctSum / pctCount : null;
+  const pureGain = lastVal - capital - totalDeposits;
+  const totalPct = capital > 0 ? (pureGain / capital) * 100 : 0;
+
+  let estimFinal = null;
+  if (avgPctFinal !== null) {
+    let v = lastVal;
+    const left = workdays.filter(d => { const r = ls(fmtKey(d,'')); return r===null||r===''; }).length;
+    for (let r = 0; r < left; r++) v = v * (1 + avgPctFinal / 100);
+    estimFinal = v;
+  }
+
+  tbody += `<tr class="total-row">
+    <td>Bilan mois</td>
+    <td style="color:var(--accent)">${pctCount > 0 ? lastVal.toFixed(2) + ' ' + currency : '—'}</td>
+    <td style="color:var(--yellow);font-size:11px">${totalDeposits !== 0 ? (totalDeposits > 0 ? '+' : '') + totalDeposits.toFixed(0) + ' ' + currency : '—'}</td>
+    <td style="color:${pureGain >= 0 ? 'var(--green)' : 'var(--red)'}">${pctCount > 0 ? (pureGain >= 0 ? '+' : '') + pureGain.toFixed(2) + ' ' + currency : '—'}</td>
+    <td><span class="pct-pill ${totalPct >= 0 ? 'pos' : 'neg'}">${pctCount > 0 ? (totalPct >= 0 ? '+' : '') + totalPct.toFixed(2) + '%' : '—'}</span></td>
+    <td><span class="pct-pill ${avgPctFinal !== null ? (avgPctFinal >= 0 ? 'pos' : 'neg') : 'neu'}">${avgPctFinal !== null ? (avgPctFinal >= 0 ? '+' : '') + avgPctFinal.toFixed(2) + '%' : '—'}</span></td>
+    <td style="color:${estimFinal !== null ? (estimFinal >= capital ? 'var(--green)' : 'var(--red)') : 'var(--muted)'};font-weight:700">${estimFinal !== null ? '≈' + estimFinal.toFixed(2) + ' ' + currency : '—'}</td>
+  </tr>`;
+
+  document.getElementById('tbody').innerHTML = tbody;
+  document.getElementById('days-count').textContent = `${pctCount} / ${workdays.length} jours`;
+
+  // Stats globales
+  const g = getGlobalStats(capInfo);
+  const monthsCount = (year - FIRST_YEAR) * 12 + (month - FIRST_MONTH) + 1;
+
+  document.getElementById('stats-grid').innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">💰 Capital ce mois</div>
+      <div class="stat-value acc">${capital.toFixed(2)} ${currency}</div>
+      ${totalDeposits !== 0 ? `<div class="stat-sub" style="color:var(--yellow)">Mvt : ${totalDeposits > 0 ? '+' : ''}${totalDeposits.toFixed(0)} ${currency}</div>` : '<div class="stat-sub">Aucun mouvement</div>'}
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">📊 Gain mois (réel)</div>
+      <div class="stat-value ${pctCount > 0 ? (pureGain >= 0 ? 'pos' : 'neg') : 'neu'}">${pctCount > 0 ? (pureGain >= 0 ? '+' : '') + pureGain.toFixed(2) + ' ' + currency : '—'}</div>
+      <div class="stat-sub ${totalPct >= 0 ? 'pos' : 'neg'}">${pctCount > 0 ? (totalPct >= 0 ? '+' : '') + totalPct.toFixed(2) + '% du capital' : 'Hors dépôts/retraits'}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">📈 % moyen / jour</div>
+      <div class="stat-value ${avgPctFinal !== null ? (avgPctFinal >= 0 ? 'pos' : 'neg') : 'neu'}">${avgPctFinal !== null ? (avgPctFinal >= 0 ? '+' : '') + avgPctFinal.toFixed(2) + '%' : '—'}</div>
+      <div class="stat-sub">${pctCount} jour${pctCount !== 1 ? 's' : ''} renseigné${pctCount !== 1 ? 's' : ''}</div>
+    </div>
+    <div class="stat-card accent">
+      <div class="stat-label">🎯 Estimation fin mois</div>
+      <div class="stat-value ${estimFinal !== null ? (estimFinal >= capital ? 'pos' : 'neg') : 'neu'}">${estimFinal !== null ? estimFinal.toFixed(2) + ' ' + currency : '—'}</div>
+    </div>
+    ${g.currentVal !== null ? `
+    <div class="stat-card global">
+      <div class="stat-label">🌍 Performance globale — depuis ${MONTHS[FIRST_MONTH]} ${FIRST_YEAR} (${monthsCount} mois)</div>
+      <div class="stat-row">
+        <div>
+          <div class="stat-mini" style="color:var(--muted);font-size:10px;margin-bottom:2px">Capital initial</div>
+          <div class="stat-mini pur">${g.firstCapital.toFixed(0)} ${currency}</div>
+        </div>
+        <div>
+          <div class="stat-mini" style="color:var(--muted);font-size:10px;margin-bottom:2px">Valeur actuelle</div>
+          <div class="stat-mini acc">${g.currentVal.toFixed(2)} ${currency}</div>
+        </div>
+        <div>
+          <div class="stat-mini" style="color:var(--muted);font-size:10px;margin-bottom:2px">Gain total réel</div>
+          <div class="stat-mini ${g.totalPureGain >= 0 ? 'pos' : 'neg'}">${g.totalPureGain >= 0 ? '+' : ''}${g.totalPureGain.toFixed(2)} ${currency}</div>
+        </div>
+        <div>
+          <div class="stat-mini" style="color:var(--muted);font-size:10px;margin-bottom:2px">% global</div>
+          <div class="stat-mini ${g.totalPct >= 0 ? 'pos' : 'neg'}">${g.totalPct >= 0 ? '+' : ''}${g.totalPct.toFixed(2)}%</div>
+        </div>
+        ${g.totalDeposits !== 0 ? `<div>
+          <div class="stat-mini" style="color:var(--muted);font-size:10px;margin-bottom:2px">Dépôts nets</div>
+          <div class="stat-mini" style="color:var(--yellow)">${g.totalDeposits >= 0 ? '+' : ''}${g.totalDeposits.toFixed(0)} ${currency}</div>
+        </div>` : ''}
+      </div>
+    </div>` : ''}
+  `;
+}
+
+// Init
+const savedOv = ls(fmtMonthKey(year, month, '_cap'));
+if (savedOv) document.getElementById('capital-override').value = savedOv;
+setTimeout(() => { const el = document.getElementById('install-hint'); if(el) el.style.display='none'; }, 8000);
+render();
+</script>
+</body>
+</html>
